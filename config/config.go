@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
 	"os"
 )
@@ -8,10 +9,14 @@ import (
 var MongoDatabase string
 var MongoUser string
 var MongoPassword string
+var MongoHost string
 
 func SettingEnv() {
 
-	godotenv.Load("./.env")
+	err := godotenv.Load("../.env")
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	var exists bool
 
@@ -28,5 +33,10 @@ func SettingEnv() {
 	MongoPassword, exists = os.LookupEnv("MONGO_PASSWORD")
 	if !exists {
 		MongoPassword = "admin"
+	}
+
+	MongoHost, exists = os.LookupEnv("MONGO_HOST")
+	if !exists {
+		MongoHost = "localhost"
 	}
 }

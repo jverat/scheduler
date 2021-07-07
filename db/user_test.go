@@ -1,34 +1,33 @@
-package test
+package db
 
 import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
-	"scheduler/db"
 	"testing"
 	"time"
 )
 
 func TestUser_Create(t *testing.T) {
 
-	err := db.DatabaseSetUp()
+	err := DatabaseSetUp()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func() {
-		err = db.DatabaseTurnoff()
+		err = DatabaseTurnoff()
 		if err != nil {
 			log.Fatal(err)
 		}
 	}()
 
-	user := db.User{
+	user := User{
 		Name:      "fgv",
 		Password:  "",
-		Profiles:  db.Profiles{},
+		Profiles:  Profiles{},
 		CreatedAt: time.Now(),
 	}
-	err = db.Create(&user)
+	err = Create(&user)
 
 	if err != nil {
 		t.Errorf("Error: %s", err.Error())
@@ -44,21 +43,21 @@ func TestUser_Create(t *testing.T) {
 }
 
 func TestUser_CreateWithProfile(t *testing.T) {
-	err := db.DatabaseSetUp()
+	err := DatabaseSetUp()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func() {
-		err = db.DatabaseTurnoff()
+		err = DatabaseTurnoff()
 		if err != nil {
 			log.Fatal(err)
 		}
 	}()
 
-	user := db.User{
+	user := User{
 		Name:     "userWithProfile",
 		Password: "",
-		Profiles: db.Profiles{db.Profile{
+		Profiles: Profiles{Profile{
 			Name:                  "",
 			WorkblockDuration:     0,
 			RestblockDuration:     0,
@@ -68,7 +67,7 @@ func TestUser_CreateWithProfile(t *testing.T) {
 		}},
 		CreatedAt: time.Now(),
 	}
-	err = db.Create(&user)
+	err = Create(&user)
 
 	if err != nil {
 		fmt.Printf("username: %s\n", user.Name)
@@ -92,16 +91,16 @@ func TestUser_Read(t *testing.T) {
 		t.Fail()
 	}
 
-	myUser := db.User{
+	myUser := User{
 		ID:       primitive.NilObjectID,
 		Name:     "ReadTestUser",
 		Password: "",
-		Profiles: db.Profiles{},
+		Profiles: Profiles{},
 	}
 
 	fmt.Printf("%+v\n", myUser)
 
-	err = db.Read(&myUser)
+	err = Read(&myUser)
 
 	if err != nil {
 		t.Errorf("Error: %s", err)
@@ -116,7 +115,7 @@ func TestUser_Read(t *testing.T) {
 
 	fmt.Printf("%+v\n", myUser)
 
-	err = db.Read(&myUser)
+	err = Read(&myUser)
 
 	fmt.Printf("%+v\n", myUser)
 
