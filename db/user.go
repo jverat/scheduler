@@ -4,81 +4,85 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 
 //User is intended to keep the personalized configurations of schedules
 type User struct {
-	ID        UserID    `bson:"_id,omitempty" json:"_id,omitempty"`
-	Name      string    `json:"name"`
-	Password  string    `json:"password"`
-	Profiles  Profiles  `json:"profiles"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	Name      string             `bson:"name" json:"name"`
+	Password  string             `bson:"password" json:"password"`
+	Profiles  Profiles           `bson:"profiles" json:"profiles"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt time.Time          `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
 }
-
-type UserID primitive.ObjectID
 
 type Users []User
 
 type Filter map[string]interface{}
 
-func (u *User) Create() (err error) {
+func Create(u *User) (err error) {
 
-	//Checks if the username is in use
-	if sR := usersCollection.FindOne(ctx, bson.D{{Key: "name", Value: u.Name}}); sR != nil {
-		return fmt.Errorf("%s already exist", u.Name)
+	var searchResult User
+
+	searchResult.Name = u.Name
+
+	err = Read(&searchResult)
+
+	if err != mongo.ErrNoDocuments {
+		return err
+	} else if searchResult.ID != primitive.NilObjectID {
+		return fmt.Errorf("object already exists in db name: %s", searchResult.Name)
 	}
 
 	//Insertion
-	fmt.Printf("%+v\n", u)
 	_, err = usersCollection.InsertOne(ctx, u)
 	if err != nil {
-		fmt.Println("err 1")
 		return err
 	}
 
-	//Return the created document, because the ObjectID is created by Mongo. The u.Name is what's going to be used to find it
-	err = u.Read()
+	//Return the created document, because the ObjectID is created by Mongo, the u.Name is what's going to be used to find it
+	err = Read(u)
 
 	return
 }
 
-func (u *User) Read() (err error) {
-	if primitive.ObjectID(u.ID) == primitive.NilObjectID && u.Name == "" {
+func Read(u *User) (err error) {
+	if u.ID == primitive.NilObjectID && u.Name == "" {
 		return fmt.Errorf("id and name nil")
 	}
 
 	conditions := Filter{
 		"$or": []Filter{
-			{"_id": Filter{"$eq": primitive.ObjectID(u.ID)}},
+			{"_id": Filter{"$eq": u.ID}},
 			{"name": Filter{"$eq": u.Name}},
 		},
 	}
+
+	fmt.Printf("beforefind: %+v", u)
 	userResult := usersCollection.FindOne(ctx, conditions)
-	if userResult == nil {
-		err = fmt.Errorf("user %s not found", u.Name)
-		return
-	}
+
+	fmt.Printf("afterfind: %+v", userResult)
 
 	err = userResult.Decode(&u)
-	if err != nil {
-		return
+
+	if err == mongo.ErrNoDocuments {
+		err = fmt.Errorf("user %s not found", u.Name)
 	}
 
-	fmt.Printf("User = %+v\n", u)
 	return
 }
 
-func (u *User) UpdateUser() (err error) {
+func Update(u *User) (err error) {
 	result, err := usersCollection.ReplaceOne(
 		ctx,
-		bson.M{"_id": Filter{"$eq": primitive.ObjectID(u.ID)}},
+		Filter{"_id": Filter{"$eq": u.ID}},
 		bson.M{
-			"Name":      u.Name,
-			"Password":  u.Password,
-			"Profiles":  u.Profiles,
-			"UpdatedAt": time.Now(),
+			"name":       u.Name,
+			"password":   u.Password,
+			"profiles":   u.Profiles,
+			"updated_at": time.Now(),
 		},
 	)
 
@@ -86,13 +90,13 @@ func (u *User) UpdateUser() (err error) {
 		return fmt.Errorf("update result nil")
 	}
 
-	return u.Read()
+	return Read(u)
 }
 
-func (u *User) DeleteUser() (err error) {
+func (u *User) Delete() (err error) {
 	result, err := usersCollection.DeleteOne(
 		ctx,
-		bson.M{"_id": Filter{"$eq": primitive.ObjectID(u.ID)}},
+		Filter{"_id": Filter{"$eq": u.ID}},
 	)
 	if result == nil || result.DeletedCount != 0 {
 		return fmt.Errorf("result = %v\n", result)

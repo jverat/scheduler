@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,9 +21,9 @@ func DatabaseSetUp() (err error) {
 
 	config.SettingEnv()
 
-	mongoURI = fmt.Sprintf("mongodb+srv://%s:%s@cluster0.elvcn.mongodb.net/%s?retryWrites=true&w=majority", config.MongoUser, config.MongoPassword, config.MongoDatabase)
+	mongoURI = "mongodb+srv://admin:BbzGn2usuaa1@cluster0.elvcn.mongodb.net/myFirstDatabase?retryWrites=true&w=majority" //fmt.Sprintf("mongodb+srv://%s:%s@cluster0.elvcn.mongodb.net/%s?retryWrites=true&w=majority", config.MongoUser, config.MongoPassword, config.MongoDatabase)
 
-	ctx, cancelFunc = context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancelFunc = context.WithTimeout(context.Background(), 100*time.Second)
 
 	client, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-
 	"scheduler/db"
 )
 
@@ -17,5 +16,4 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
-
 }
