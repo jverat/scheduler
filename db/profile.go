@@ -16,24 +16,35 @@ type Profile struct {
 type Profiles []Profile
 
 func createProfiles(uID int, pf Profiles) (err error) {
+	conn, err := Connection.Acquire(ctx)
+	if err != nil {
+		return
+	}
 
 	if len(pf) > 0 {
 		for i := 0; i < len(pf); i++ {
 			query := fmt.Sprintf("INSERT INTO public.profile (name, workblock_duration, restblock_duration, longrestblock_duration, n_workblocks, user_id) VALUES ('%s', %d, %d, %d, %d, %d)",
 				pf[i].Name, pf[i].WorkblockDuration, pf[i].RestblockDuration, pf[i].LongRestblockDuration, pf[i].NWorkblocks, uID)
-			_, err = Connection.Query(ctx, query)
+			_, err = conn.Query(ctx, query)
 			if err != nil {
 				return
 			}
 		}
 	}
 
+	conn.Release()
+
 	return
 }
 
 func readProfiles(u User) (user User, err error) {
+	conn, err := Connection.Acquire(ctx)
+	if err != nil {
+		return
+	}
 	query := fmt.Sprintf("SELECT * FROM public.profile WHERE user_id = %d", u.ID)
-	rows, err := Connection.Query(ctx, query)
+	rows, err := conn.Query(ctx, query)
+	conn.Release()
 	if err != nil {
 		return
 	}

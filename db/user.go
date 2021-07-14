@@ -15,8 +15,14 @@ type User struct {
 type Users []User
 
 func Create(u User) (user User, err error) {
+
+	conn, err := Connection.Acquire(ctx)
+	if err != nil {
+		return
+	}
 	query := fmt.Sprintf("INSERT INTO public.user (name, password) VALUES ('%s', '%s')", u.Name, u.Password)
-	_, err = Connection.Query(ctx, query)
+	_, err = conn.Query(ctx, query)
+	conn.Release()
 
 	if err != nil {
 		return
@@ -37,6 +43,10 @@ func Create(u User) (user User, err error) {
 }
 
 func Read(u User) (user User, err error) {
+	conn, err := Connection.Acquire(ctx)
+	if err != nil {
+		return
+	}
 	query := "SELECT * FROM public.user"
 	if u.ID == 0 {
 		query += fmt.Sprintf(" WHERE name = '%s'", u.Name)
@@ -44,7 +54,8 @@ func Read(u User) (user User, err error) {
 		query += fmt.Sprintf(" WHERE id = %d", u.ID)
 	}
 
-	row := Connection.QueryRow(ctx, query)
+	row := conn.QueryRow(ctx, query)
+	conn.Release()
 	err = row.Scan(&user.ID, &user.Name, &user.Password)
 	if err != nil {
 		return
