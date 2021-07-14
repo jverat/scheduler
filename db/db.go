@@ -24,15 +24,3 @@ func DatabaseSetUp() (err error) {
 	}
 	return
 }
-
-func prepareStatements() (err error) {
-	acquire, err := Connection.Acquire(ctx)
-	if err != nil {
-		return err
-	}
-	_, err = acquire.Conn().Prepare(ctx, "Read", `SELECT * FROM user !1`)
-	if err != nil {
-		return err
-	}
-	return
-}

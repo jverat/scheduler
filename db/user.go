@@ -14,9 +14,26 @@ type User struct {
 
 type Users []User
 
-func Create(u *User) (err error) {
+func Create(u User) (user User, err error) {
+	query := fmt.Sprintf("INSERT INTO public.user (name, password) VALUES ('%s', '%s')", u.Name, u.Password)
+	_, err = Connection.Query(ctx, query)
 
-	return
+	if err != nil {
+		return
+	}
+
+	user, err = Read(u)
+
+	if err != nil {
+		return
+	}
+
+	if createProfiles(user.ID, u.Profiles) != nil {
+		return
+	}
+
+	return Read(user)
+
 }
 
 func Read(u User) (user User, err error) {
@@ -33,13 +50,13 @@ func Read(u User) (user User, err error) {
 		return
 	}
 
-	return getProfiles(user)
+	return readProfiles(user)
 }
 
-func Update(u *User) (err error) {
+func Update(u User) (user User, err error) {
 	return
 }
 
-func Delete(u *User) (err error) {
+func Delete(u User) (user User, err error) {
 	return
 }
