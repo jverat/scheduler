@@ -11,7 +11,8 @@ func main() {
 		log.Fatal(err)
 	}
 	defer func() {
-		err = db.DatabaseTurnoff()
+		db.Connection.Close()
+		db.CancelFunc()
 		if err != nil {
 			log.Fatal(err)
 		}

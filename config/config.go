@@ -4,39 +4,48 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	"os"
+	"strings"
 )
 
-var MongoDatabase string
-var MongoUser string
-var MongoPassword string
-var MongoHost string
+var PostgresDatabase string
+var PostgresUser string
+var PostgresPassword string
+var PostgresHost string
 
 func SettingEnv() {
 
-	err := godotenv.Load("../.env")
+	absPath, err := os.Getwd()
+	var dotenv string
+	if strings.HasSuffix(absPath, "scheduler") {
+		dotenv = ".env"
+	} else {
+		dotenv = "../.env"
+	}
+
+	err = godotenv.Load(dotenv)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	var exists bool
 
-	MongoDatabase, exists = os.LookupEnv("MONGO_DATABASE")
+	PostgresDatabase, exists = os.LookupEnv("POSTGRES_DATABASE")
 	if !exists {
-		MongoDatabase = "scheduler-db"
+		PostgresDatabase = "scheduler-db"
 	}
 
-	MongoUser, exists = os.LookupEnv("MONGO_USER")
+	PostgresUser, exists = os.LookupEnv("POSTGRES_USER")
 	if !exists {
-		MongoUser = "admin"
+		PostgresUser = "admin"
 	}
 
-	MongoPassword, exists = os.LookupEnv("MONGO_PASSWORD")
+	PostgresPassword, exists = os.LookupEnv("POSTGRES_PASSWORD")
 	if !exists {
-		MongoPassword = "admin"
+		PostgresPassword = "admin"
 	}
 
-	MongoHost, exists = os.LookupEnv("MONGO_HOST")
+	PostgresHost, exists = os.LookupEnv("POSTGRES_HOST")
 	if !exists {
-		MongoHost = "localhost"
+		PostgresHost = "localhost"
 	}
 }

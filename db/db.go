@@ -5,41 +5,34 @@ import (
 	"fmt"
 	"time"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/jackc/pgx/v4/pgxpool"
 
 	"scheduler/config"
 )
 
-var client *mongo.Client
 var ctx context.Context
-var cancelFunc context.CancelFunc
-var database *mongo.Database
-var usersCollection *mongo.Collection
-var mongoURI string
+var CancelFunc context.CancelFunc
+var Connection *pgxpool.Pool
 
 func DatabaseSetUp() (err error) {
-
 	config.SettingEnv()
-
-	mongoURI = fmt.Sprintf("mongodb+srv://%s:%s@%s/%s?retryWrites=true&w=majority", config.MongoUser, config.MongoPassword, config.MongoHost, config.MongoDatabase)
-
-	ctx, cancelFunc = context.WithTimeout(context.Background(), 100*time.Second)
-
-	client, err = mongo.Connect(ctx, options.Client().ApplyURI(mongoURI))
-
+	ctx, CancelFunc = context.WithTimeout(context.Background(), 100*time.Second)
+	uri := fmt.Sprintf("postgres://%s/%s?user=%s&password=%s", config.PostgresHost, config.PostgresDatabase, config.PostgresUser, config.PostgresPassword)
+	Connection, err = pgxpool.Connect(ctx, uri)
 	if err != nil {
-		return
+		return err
 	}
-
-	database = client.Database(config.MongoDatabase)
-	usersCollection = database.Collection("Users")
-
 	return
 }
 
-func DatabaseTurnoff() (err error) {
-	err = client.Disconnect(ctx)
-	cancelFunc()
-	return err
+func prepareStatements() (err error) {
+	acquire, err := Connection.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = acquire.Conn().Prepare(ctx, "Read", `SELECT * FROM user !1`)
+	if err != nil {
+		return err
+	}
+	return
 }
