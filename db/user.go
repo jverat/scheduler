@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/jackc/pgx/v4"
 )
 
 //User is intended to keep the personalized configurations of schedules
@@ -15,6 +16,8 @@ type User struct {
 type Users []User
 
 func Create(u User) (user User, err error) {
+
+	u.ID = 0
 
 	conn, err := Connection.Acquire(ctx)
 	if err != nil {
@@ -34,37 +37,81 @@ func Create(u User) (user User, err error) {
 		return
 	}
 
-	if createProfiles(user.ID, u.Profiles) != nil {
+	user.Profiles, err = createProfiles(user.ID, u.Profiles)
+
+	if err != nil {
 		return
 	}
 
 	return Read(user)
-
 }
 
 func Read(u User) (user User, err error) {
-	conn, err := Connection.Acquire(ctx)
-	if err != nil {
-		return
-	}
-	query := "SELECT * FROM public.user"
-	if u.ID == 0 {
+	query := "SELECT * FROM public.\"user\""
+	if u.ID <= 0 {
 		query += fmt.Sprintf(" WHERE name = '%s'", u.Name)
 	} else {
 		query += fmt.Sprintf(" WHERE id = %d", u.ID)
 	}
+	fmt.Println(query)
+	queryChan, outputChan, errChan := make(chan string), make(chan pgx.Rows), make(chan error)
+	go acquireConn(queryChan, outputChan, errChan)
+	queryChan <- query
+	close(queryChan)
 
-	row := conn.QueryRow(ctx, query)
-	conn.Release()
-	err = row.Scan(&user.ID, &user.Name, &user.Password)
+	select {
+	case err = <-errChan:
+		return
+	case rows := <-outputChan:
+		{
+			if rows.Scan(&user.ID, &user.Name, &user.Password) != nil {
+				return
+			}
+
+			var wtf Users
+			var bugser User
+
+			for r := range outputChan {
+				if r.Scan(&bugser.ID, &bugser.Name, &bugser.Password) != nil {
+					return
+				}
+				wtf = append(wtf, bugser)
+			}
+
+			if len(wtf) > 0 {
+				return user, fmt.Errorf("too many users found = %+v", wtf)
+			}
+		}
+	}
+
+	user.Profiles, err = readProfiles(user.ID)
+	return
+}
+
+func Update(u User) (err error) {
+	query := fmt.Sprintf("UPDATE public.user SET name = '%s', password = '%s' WHERE id = %d", u.Name, u.Password, u.ID)
+	conn, err := Connection.Acquire(ctx)
 	if err != nil {
 		return
 	}
 
-	return readProfiles(user)
-}
+	_, err = conn.Query(ctx, query)
+	conn.Release()
+	if err != nil {
+		return
+	}
 
-func Update(u User) (user User, err error) {
+	oldU, err := Read(u)
+	if err != nil {
+		return
+	}
+
+	if identicals(u.Profiles, oldU.Profiles) {
+		return
+	}
+
+	err = updateProfiles(u.ID, u.Profiles, oldU.Profiles)
+
 	return
 }
 
