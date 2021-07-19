@@ -70,15 +70,15 @@ func Read(u User) (user User, err error) {
 		{
 			var wtf Users
 			var bugser User
-			var i int
+			i := true
 
 			for rows.Next() {
-				if i == 0 {
+				if i {
 					err = rows.Scan(&user.ID, &user.Name, &user.Password)
 					if err != nil {
 						return
 					}
-					i++
+					i = false
 				} else {
 					err = rows.Scan(&bugser.ID, &bugser.Name, &bugser.Password)
 					if err != nil {
