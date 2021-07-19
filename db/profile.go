@@ -41,39 +41,39 @@ func identicals(x, y Profiles) bool {
 }
 
 func createProfiles(uID int, pf Profiles) (profiles Profiles, err error) {
-	conn, err := Connection.Acquire(ctx)
-	if err != nil {
-		return
-	}
+	queryChan, outputChan, errorChan := make(chan string), make(chan pgx.Rows), make(chan error)
+	go AcquireConn(queryChan, outputChan, errorChan)
 
 	if len(pf) > 0 {
 		for i := 0; i < len(pf); i++ {
 			query := fmt.Sprintf("INSERT INTO public.profile (name, workblock_duration, restblock_duration, longrestblock_duration, n_workblocks, user_id) VALUES ('%s', %d, %d, %d, %d, %d)",
 				pf[i].Name, pf[i].WorkblockDuration, pf[i].RestblockDuration, pf[i].LongRestblockDuration, pf[i].NWorkblocks, uID)
 
-			_, err = conn.Query(ctx, query)
-			if err != nil {
-				return
+			queryChan <- query
+			select {
+			case err = <-errorChan:
+				{
+					close(queryChan)
+					return
+				}
+			case _ = <-outputChan:
 			}
 		}
 	}
-
-	conn.Release()
+	close(queryChan)
 
 	return readProfiles(uID)
 }
 
 func readProfiles(uID int) (profiles Profiles, err error) {
-	conn, err := Connection.Acquire(ctx)
-	if err != nil {
-		return
-	}
-	query := fmt.Sprintf("SELECT * FROM public.profile WHERE user_id = %d", uID)
-	rows, err := conn.Query(ctx, query)
-	conn.Release()
-	if err != nil {
-		return
-	}
+	queryChan, outputChan, errorChan := make(chan string), make(chan pgx.Rows), make(chan error)
+	go AcquireConn(queryChan, outputChan, errorChan)
+	query := fmt.Sprintf("SELECT * FROM public.\"profile\" WHERE user_id = %d", uID)
+	queryChan <- query
+	close(queryChan)
+
+	rows := <-outputChan
+
 	for rows.Next() {
 		var pf Profile
 		err = rows.Scan(&pf.Name, &pf.WorkblockDuration, &pf.RestblockDuration, &pf.LongRestblockDuration, &pf.NWorkblocks, nil, nil)
@@ -95,7 +95,7 @@ func updateProfiles(uID int, newProfiles Profiles, oldProfiles Profiles) (err er
 	}*/
 
 	queryChan, outputChan, errChan := make(chan string), make(chan pgx.Rows), make(chan error)
-	go acquireConn(queryChan, outputChan, errChan)
+	go AcquireConn(queryChan, outputChan, errChan)
 
 	if len(newProfiles) == len(oldProfiles) {
 		for i := 0; i < len(newProfiles); i++ {

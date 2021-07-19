@@ -19,16 +19,18 @@ func Create(u User) (user User, err error) {
 
 	u.ID = 0
 
-	conn, err := Connection.Acquire(ctx)
-	if err != nil {
-		return
-	}
 	query := fmt.Sprintf("INSERT INTO public.user (name, password) VALUES ('%s', '%s')", u.Name, u.Password)
-	_, err = conn.Query(ctx, query)
-	conn.Release()
 
-	if err != nil {
+	queryChan, outputChan, errorChan := make(chan string), make(chan pgx.Rows), make(chan error)
+	go AcquireConn(queryChan, outputChan, errorChan)
+
+	queryChan <- query
+	close(queryChan)
+
+	select {
+	case err = <-errorChan:
 		return
+	case _ = <-outputChan:
 	}
 
 	user, err = Read(u)
@@ -53,31 +55,38 @@ func Read(u User) (user User, err error) {
 	} else {
 		query += fmt.Sprintf(" WHERE id = %d", u.ID)
 	}
-	fmt.Println(query)
+
 	queryChan, outputChan, errChan := make(chan string), make(chan pgx.Rows), make(chan error)
-	go acquireConn(queryChan, outputChan, errChan)
+	go AcquireConn(queryChan, outputChan, errChan)
 	queryChan <- query
 	close(queryChan)
 
 	select {
 	case err = <-errChan:
-		return
+		if err != nil {
+			return
+		}
 	case rows := <-outputChan:
 		{
-			if rows.Scan(&user.ID, &user.Name, &user.Password) != nil {
-				return
-			}
-
 			var wtf Users
 			var bugser User
+			var i int
 
-			for r := range outputChan {
-				if r.Scan(&bugser.ID, &bugser.Name, &bugser.Password) != nil {
-					return
+			for rows.Next() {
+				if i == 0 {
+					err = rows.Scan(&user.ID, &user.Name, &user.Password)
+					if err != nil {
+						return
+					}
+					i++
+				} else {
+					err = rows.Scan(&bugser.ID, &bugser.Name, &bugser.Password)
+					if err != nil {
+						return
+					}
+					wtf = append(wtf, bugser)
 				}
-				wtf = append(wtf, bugser)
 			}
-
 			if len(wtf) > 0 {
 				return user, fmt.Errorf("too many users found = %+v", wtf)
 			}
