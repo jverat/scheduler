@@ -40,7 +40,7 @@ func identicals(x, y Profiles) bool {
 	return true
 }
 
-func createProfiles(uID int, pf Profiles) (profiles Profiles, err error) {
+func createProfiles(uID int, pf Profiles) (err error) {
 	queryChan, outputChan, errorChan := make(chan string), make(chan pgx.Rows), make(chan error)
 	go AcquireConn(queryChan, outputChan, errorChan)
 
@@ -62,7 +62,7 @@ func createProfiles(uID int, pf Profiles) (profiles Profiles, err error) {
 	}
 	close(queryChan)
 
-	return readProfiles(uID)
+	return
 }
 
 func readProfiles(uID int) (profiles Profiles, err error) {

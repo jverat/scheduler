@@ -39,11 +39,13 @@ func Create(u User) (user User, err error) {
 		return
 	}
 
-	user.Profiles, err = createProfiles(user.ID, u.Profiles)
+	err = createProfiles(user.ID, u.Profiles)
 
 	if err != nil {
 		return
 	}
+
+	user.Profiles = u.Profiles
 
 	return Read(user)
 }

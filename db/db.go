@@ -24,23 +24,27 @@ func DatabaseSetUp() (err error) {
 }
 
 func AcquireConn(queryChan chan string, outputChan chan pgx.Rows, errChan chan error) {
-	conn, err := Connection.Acquire(ctx)
-	if err != nil {
-		errChan <- err
-		if conn != nil {
-			conn.Release()
-		}
-		return
-	}
 
 	for q := range queryChan {
-		r, err := conn.Query(ctx, q)
+
+		conn, err := Connection.Acquire(ctx)
 		if err != nil {
 			errChan <- err
+			if conn != nil {
+				conn.Release()
+			}
+			return
+		}
+
+		r, err := conn.Query(ctx, q)
+		conn.Release()
+		if err != nil {
+			errChan <- err
+			return
 		} else {
 			outputChan <- r
 		}
+
 	}
 	close(outputChan)
-	conn.Release()
 }
