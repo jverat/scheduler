@@ -89,10 +89,6 @@ func readProfiles(uID int) (profiles Profiles, err error) {
 
 func updateProfiles(uID int, newProfiles Profiles, oldProfiles Profiles) (err error) {
 	query := "UPDATE public.profile SET name = '%s', workblock_duration = %d, restblock_duration = %d, longrestblock_duration = %d, n_workblocks = %d WHERE name = '%s' AND user_id = %d"
-	/*conn, err := Connection.Acquire(ctx)
-	if err != nil {
-		return
-	}*/
 
 	queryChan, outputChan, errChan := make(chan string), make(chan pgx.Rows), make(chan error)
 	go AcquireConn(queryChan, outputChan, errChan)
@@ -101,10 +97,6 @@ func updateProfiles(uID int, newProfiles Profiles, oldProfiles Profiles) (err er
 		for i := 0; i < len(newProfiles); i++ {
 			if !identical(newProfiles[i], oldProfiles[i]) {
 				q := fmt.Sprintf(query, newProfiles[i].Name, newProfiles[i].WorkblockDuration, newProfiles[i].RestblockDuration, newProfiles[i].LongRestblockDuration, newProfiles[i].NWorkblocks, oldProfiles[i].Name, uID)
-				/*_, err = conn.Query(ctx, q)
-				if err != nil {
-					return
-				}*/
 				queryChan <- q
 				select {
 				case err = <-errChan:
@@ -127,4 +119,32 @@ func updateProfiles(uID int, newProfiles Profiles, oldProfiles Profiles) (err er
 	//conn.Release()
 
 	return
+}
+
+func DeleteProfile(uID int, pf Profile) (err error) {
+	queryChan, outputChan, errorChan := make(chan string), make(chan pgx.Rows), make(chan error)
+	go AcquireConn(queryChan, outputChan, errorChan)
+	query := fmt.Sprintf("DELETE FROM public.\"profile\" * WHERE name = '%s' AND user_id = %d", pf.Name, uID)
+	queryChan <- query
+	close(queryChan)
+	select {
+	case err = <-errorChan:
+		return
+	case _ = <-outputChan:
+		return
+	}
+}
+
+func deleteProfiles(uID int) (err error) {
+	queryChan, outputChan, errorChan := make(chan string), make(chan pgx.Rows), make(chan error)
+	go AcquireConn(queryChan, outputChan, errorChan)
+	query := fmt.Sprintf("DELETE FROM public.\"profile\" * WHERE user_id = %d", uID)
+	queryChan <- query
+	close(queryChan)
+	select {
+	case err = <-errorChan:
+		return
+	case _ = <-outputChan:
+		return
+	}
 }

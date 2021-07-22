@@ -126,6 +126,21 @@ func Update(u User) (err error) {
 	return
 }
 
-func Delete(u User) (user User, err error) {
+func Delete(u User) (err error) {
+
+	err = deleteProfiles(u.ID)
+	if err != nil {
+		return
+	}
+
+	queryChan, outputChan, errorChan := make(chan string), make(chan pgx.Rows), make(chan error)
+	go AcquireConn(queryChan, outputChan, errorChan)
+	query := fmt.Sprintf("DELETE FROM public.\"user\" * WHERE id = %d", u.ID)
+	queryChan <- query
+	close(queryChan)
+	select {
+	case err = <-errorChan:
+	case _ = <-outputChan:
+	}
 	return
 }
