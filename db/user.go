@@ -39,13 +39,11 @@ func Create(u User) (user User, err error) {
 		return
 	}
 
-	err = createProfiles(user.ID, u.Profiles)
+	user.Profiles, err = CreateProfiles(user.ID, u.Profiles)
 
 	if err != nil {
 		return
 	}
-
-	user.Profiles = u.Profiles
 
 	return Read(user)
 }
@@ -95,21 +93,23 @@ func Read(u User) (user User, err error) {
 		}
 	}
 
-	user.Profiles, err = readProfiles(user.ID)
+	user.Profiles, err = ReadProfiles(user.ID)
 	return
 }
 
 func Update(u User) (err error) {
 	query := fmt.Sprintf("UPDATE public.user SET name = '%s', password = '%s' WHERE id = %d", u.Name, u.Password, u.ID)
-	conn, err := Connection.Acquire(ctx)
-	if err != nil {
-		return
-	}
+	queryChan, outputChan, errChan := make(chan string), make(chan pgx.Rows), make(chan error)
+	go AcquireConn(queryChan, outputChan, errChan)
+	queryChan <- query
+	close(queryChan)
 
-	_, err = conn.Query(ctx, query)
-	conn.Release()
-	if err != nil {
-		return
+	select {
+	case err = <-errChan:
+		if err != nil {
+			return
+		}
+	case _ = <-outputChan:
 	}
 
 	oldU, err := Read(u)
@@ -128,7 +128,7 @@ func Update(u User) (err error) {
 
 func Delete(u User) (err error) {
 
-	err = deleteProfiles(u.ID)
+	err = DeleteProfiles(u.ID)
 	if err != nil {
 		return
 	}

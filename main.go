@@ -6,6 +6,12 @@ import (
 	"scheduler/db"
 )
 
+/*
+TODO
+DB error handling
+REST routes
+Learn algorithmics
+*/
 func main() {
 	err := db.DatabaseSetUp()
 	if err != nil {
