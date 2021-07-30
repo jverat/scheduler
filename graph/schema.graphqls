@@ -1,0 +1,48 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type User {
+  ID: Int!
+  Name: String!
+  Password: String
+}
+
+type Profile {
+  ID                   :  Int!
+  Name                 :  String!
+  WorkblockDuration    :  Int!
+  RestblockDuration    :  Int!
+  LongRestblockDuration:  Int!
+  NWorkblocks          :  Int!
+}
+
+type Query {
+  user(id: Int!): User
+  profiles(userID: Int!): [Profile!]
+  profile(id: Int!, userID: Int!): Profile
+}
+
+input NewUser {
+  Name: String!
+  Password: String!
+}
+
+input LoginUser {
+  Name: String!
+  Password: String!
+}
+
+input NewProfile {
+  Name                 :  String!
+  WorkblockDuration    :  Int!
+  RestblockDuration    :  Int!
+  LongRestblockDuration:  Int!
+  NWorkblocks          :  Int!
+}
+
+type Mutation {
+  createUser(input: NewUser!): User!
+  logUser(input: LoginUser!): Boolean!
+  createProfile(input: NewProfile): Profile!
+}

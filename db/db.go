@@ -17,7 +17,7 @@ var Connection *pgxpool.Pool
 
 func DatabaseSetUp() (err error) {
 	config.SettingEnv()
-	ctx, CancelFunc = context.WithTimeout(context.Background(), 100*time.Second)
+	ctx, CancelFunc = context.WithTimeout(context.Background(), 1000*time.Second)
 	uri := fmt.Sprintf("postgres://%s/%s?user=%s&password=%s", config.PostgresHost, config.PostgresDatabase, config.PostgresUser, config.PostgresPassword)
 	Connection, err = pgxpool.Connect(ctx, uri)
 	return

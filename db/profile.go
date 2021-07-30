@@ -50,6 +50,10 @@ func identicals(x, y Profiles) bool {
 }
 
 func orderByID(input Profiles) (result Profiles) {
+	if len(input) == 0 {
+		return input
+	}
+
 	var minorIndex, minorID int
 
 	minorID = input[0].ID

@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"github.com/jackc/pgx/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 //User is intended to keep the personalized configurations of schedules
@@ -15,11 +16,22 @@ type User struct {
 
 type Users []User
 
+func hashPass(password string) (hash string, err error) {
+	h, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+
+	return string(h), err
+}
+
 func Create(u User) (user User, err error) {
 
 	u.ID = 0
 
-	query := fmt.Sprintf("INSERT INTO public.user (name, password) VALUES ('%s', '%s')", u.Name, u.Password)
+	hashed, err := hashPass(u.Password)
+	if err != nil {
+		return
+	}
+
+	query := fmt.Sprintf("INSERT INTO public.user (name, password) VALUES ('%s', '%s')", u.Name, hashed)
 
 	queryChan, outputChan, errorChan := make(chan string), make(chan pgx.Rows), make(chan error)
 	go AcquireConn(queryChan, outputChan, errorChan)
@@ -98,7 +110,11 @@ func Read(u User) (user User, err error) {
 }
 
 func Update(u User) (err error) {
-	query := fmt.Sprintf("UPDATE public.user SET name = '%s', password = '%s' WHERE id = %d", u.Name, u.Password, u.ID)
+	hashed, err := hashPass(u.Password)
+	if err != nil {
+		return
+	}
+	query := fmt.Sprintf("UPDATE public.user SET name = '%s', password = '%s' WHERE id = %d", u.Name, hashed, u.ID)
 	queryChan, outputChan, errChan := make(chan string), make(chan pgx.Rows), make(chan error)
 	go AcquireConn(queryChan, outputChan, errChan)
 	queryChan <- query
