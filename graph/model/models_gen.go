@@ -2,12 +2,22 @@
 
 package model
 
+type DeleteProfile struct {
+	UID int `json:"UID"`
+	ID  int `json:"ID"`
+}
+
+type DeleteUser struct {
+	ID int `json:"ID"`
+}
+
 type LoginUser struct {
 	Name     string `json:"Name"`
 	Password string `json:"Password"`
 }
 
 type NewProfile struct {
+	UID                   int    `json:"UID"`
 	Name                  string `json:"Name"`
 	WorkblockDuration     int    `json:"WorkblockDuration"`
 	RestblockDuration     int    `json:"RestblockDuration"`
@@ -27,6 +37,22 @@ type Profile struct {
 	RestblockDuration     int    `json:"RestblockDuration"`
 	LongRestblockDuration int    `json:"LongRestblockDuration"`
 	NWorkblocks           int    `json:"NWorkblocks"`
+}
+
+type UpdateProfile struct {
+	UID                   int    `json:"UID"`
+	ID                    int    `json:"ID"`
+	Name                  string `json:"Name"`
+	WorkblockDuration     int    `json:"WorkblockDuration"`
+	RestblockDuration     int    `json:"RestblockDuration"`
+	LongRestblockDuration int    `json:"LongRestblockDuration"`
+	NWorkblocks           int    `json:"NWorkblocks"`
+}
+
+type UpdateUser struct {
+	ID       int    `json:"ID"`
+	Name     string `json:"Name"`
+	Password string `json:"Password"`
 }
 
 type User struct {

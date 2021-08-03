@@ -79,6 +79,10 @@ func orderByID(input Profiles) (result Profiles) {
 }
 
 func CreateProfiles(uID int, pf Profiles) (profiles Profiles, err error) {
+	_, err = Read(User{ID: uID})
+	if err != nil {
+		return
+	}
 	queryChan, outputChan, errorChan := make(chan string), make(chan pgx.Rows), make(chan error)
 	go AcquireConn(queryChan, outputChan, errorChan)
 
@@ -126,7 +130,7 @@ func ReadProfiles(uID int) (profiles Profiles, err error) {
 	return
 }
 
-func updateProfiles(uID int, newProfiles Profiles, oldProfiles Profiles) (err error) {
+func UpdateProfiles(uID int, newProfiles Profiles, oldProfiles Profiles) (err error) {
 	queryUpdate := "UPDATE public.\"profile\" SET name = '%s', workblock_duration = %d, restblock_duration = %d, longrestblock_duration = %d, n_workblocks = %d WHERE id = %d"
 	queryCreate := "INSERT INTO public.\"profile\" (name, workblock_duration, restblock_duration, longrestblock_duration, n_workblocks, id, user_id) VALUES ('%s', %d, %d, %d, %d, DEFAULT, %d) RETURNING id"
 
@@ -178,7 +182,7 @@ func updateProfiles(uID int, newProfiles Profiles, oldProfiles Profiles) (err er
 		}
 
 		if !identicals(oldProfiles, newProfiles) {
-			return updateProfiles(uID, newProfiles, oldProfiles)
+			return UpdateProfiles(uID, newProfiles, oldProfiles)
 		}
 	}
 	return

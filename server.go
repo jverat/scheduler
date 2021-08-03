@@ -18,6 +18,13 @@ TODO
 DB error handling
 Implement graphql
 Learn algorithmics
+Documentation
+Expand functionality
+*/
+
+/*
+BUGS
+when you try to create an already existing user postgre returns the id of it instead of returning an error
 */
 
 const defaultPort = "8080"

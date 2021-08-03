@@ -16,6 +16,8 @@ type User struct {
 
 type Users []User
 
+var ErrUserNotFound = fmt.Errorf("user not found")
+
 func hashPass(password string) (hash string, err error) {
 	h, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 
@@ -105,6 +107,10 @@ func Read(u User) (user User, err error) {
 		}
 	}
 
+	if user.ID == 0 {
+		return User{}, ErrUserNotFound
+	}
+
 	user.Profiles, err = ReadProfiles(user.ID)
 	return
 }
@@ -127,17 +133,6 @@ func Update(u User) (err error) {
 		}
 	case _ = <-outputChan:
 	}
-
-	oldU, err := Read(u)
-	if err != nil {
-		return
-	}
-
-	if identicals(u.Profiles, oldU.Profiles) {
-		return
-	}
-
-	err = updateProfiles(u.ID, u.Profiles, oldU.Profiles)
 
 	return
 }

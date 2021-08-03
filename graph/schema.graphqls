@@ -3,9 +3,9 @@
 # https://gqlgen.com/getting-started/
 
 type User {
-  ID: Int!
-  Name: String!
-  Password: String
+  ID        : Int!
+  Name      : String!
+  Password  : String
 }
 
 type Profile {
@@ -18,22 +18,33 @@ type Profile {
 }
 
 type Query {
-  user(id: Int!): User
-  profiles(userID: Int!): [Profile!]
-  profile(id: Int!, userID: Int!): Profile
+  user(id: Int!)                    : User
+  profiles(userID: Int!)            : [Profile!]
+  profile(id: Int!, userID: Int!)   : Profile
 }
 
 input NewUser {
-  Name: String!
-  Password: String!
+  Name      : String!
+  Password  : String!
 }
 
 input LoginUser {
-  Name: String!
-  Password: String!
+  Name      : String!
+  Password  : String!
+}
+
+input UpdateUser {
+    ID      : Int!
+    Name    : String!
+    Password: String!
+}
+
+input DeleteUser {
+    ID : Int!
 }
 
 input NewProfile {
+  UID                  :  Int!
   Name                 :  String!
   WorkblockDuration    :  Int!
   RestblockDuration    :  Int!
@@ -41,8 +52,28 @@ input NewProfile {
   NWorkblocks          :  Int!
 }
 
+input UpdateProfile {
+    UID                  :  Int!
+    ID                   :  Int!
+    Name                 :  String!
+    WorkblockDuration    :  Int!
+    RestblockDuration    :  Int!
+    LongRestblockDuration:  Int!
+    NWorkblocks          :  Int!
+}
+
+input DeleteProfile {
+    UID : Int!
+    ID  : Int!
+}
+
 type Mutation {
-  createUser(input: NewUser!): User!
-  logUser(input: LoginUser!): Boolean!
-  createProfile(input: NewProfile): Profile!
+  createUser        (input: NewUser!)           : User!
+  logUser           (input: LoginUser!)         : Boolean!
+  updateUser        (input: UpdateUser!)        : Boolean!
+  deleteUser        (input: DeleteUser!)        : Boolean!
+  createProfile     (input: NewProfile!)        : Profile!
+  createProfiles    (input: [NewProfile!]!)      : [Profile!]
+  updateProfiles    (input: [UpdateProfile!]!)   : Boolean!
+  deleteProfile     (input: DeleteProfile!)     : Boolean!
 }
