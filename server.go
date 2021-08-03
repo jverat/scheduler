@@ -16,7 +16,7 @@ import (
 /*
 TODO
 DB error handling
-Implement graphql
+Implement some kind of authentication
 Learn algorithmics
 Documentation
 Expand functionality
