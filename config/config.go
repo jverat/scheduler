@@ -1,8 +1,8 @@
 package config
 
 import (
-	"fmt"
 	"github.com/joho/godotenv"
+	"log"
 	"os"
 	"strings"
 )
@@ -24,7 +24,7 @@ func SettingEnv() {
 
 	err = godotenv.Load(dotenv)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalln(err)
 	}
 
 	var exists bool
