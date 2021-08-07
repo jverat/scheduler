@@ -4,21 +4,16 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
-	"strings"
 )
 
+var BackendURL string
 var Token string
 
-func SetUpBot() {
+func init() {
+	setUpBot()
+}
 
-	absPath, _ := os.Getwd()
-	var dotenv string
-	if strings.HasSuffix(absPath, "scheduler/discordbot") {
-		dotenv = ".env"
-	} else {
-		dotenv = "../.env"
-	}
-	log.Printf("%s\n", dotenv)
+func setUpBot() {
 
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -26,6 +21,12 @@ func SetUpBot() {
 	}
 
 	var exists bool
+
+	BackendURL, exists = os.LookupEnv("BACKEND_URL")
+	if !exists {
+		log.Fatal("Backend URL not found")
+	}
+
 	Token, exists = os.LookupEnv("DISCORD_TOKEN")
 	if !exists {
 		log.Fatal("Token not found")
