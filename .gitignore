@@ -13,7 +13,30 @@
 
 discordbot/.env
 .env
-\.idea
+/.idea
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Frontend
+# dependencies
+/scheduler-frontend/node_modules
+/scheduler-frontend/.pnp
+/scheduler-frontend/.pnp.js
+
+# testing
+/scheduler-frontend/coverage
+
+# production
+/scheduler-frontend/build
+
+# misc
+/scheduler-frontend/.DS_Store
+/scheduler-frontend/.env.local
+/scheduler-frontend/.env.development.local
+/scheduler-frontend/.env.test.local
+/scheduler-frontend/.env.production.local
+
+/scheduler-frontend/npm-debug.log*
+/scheduler-frontend/yarn-debug.log*
+/scheduler-frontend/yarn-error.log*
